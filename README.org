@@ -76,11 +76,42 @@ The tests confirm that typechecking (.e.g.: input is of type string) and whitesp
     (should (funcall agree "Hüçø Co" "Hüçø Co"))))
 #+end_src
 
-#+begin_src elisp :results none
-(defun acct-rcpt--valid-data-p (label)
-  nil)
+**** Context Data Validation
 
-(defun acct-rcpt--valid-context-p (context)
+In order to valildate context data, we define a *valid context data* function to return a 2-element list containing a valid context data alist or =nil= as its first element and an optional string indicating the grounds on which validation failed after verifying that:
+1. input is an alist (association list)
+2. input alist has the =:base-directory= key with a /string/ value
+
+#+begin_src elisp :results none
+(defun acct-rcpt--valid-context-data (data)
+  (cond ((not (and (listp data) (cl-every 'consp data)))
+         '(nil "Context data is not a valid alist"))
+        ((not (stringp (alist-get :base-directory data)))
+         '(nil "Context data lacks :base-directory key with a string value"))
+        (t (list data nil))))
+#+end_src
+
+The tests confirm that "typechecking" (i.e.: input is an alist) and schema validation (structure) work as expected. As in the [[*Context Label Validation][label validation helper]], we define an =agree= helper to verify agreement between an expected value and the output of the *valid context label* helper.
+
+#+begin_src elisp :results none
+(ert-deftest acct-rcpt--valid-context-data ()
+  (let ((agree (lambda (x y)
+                 (equal x (car (acct-rcpt--valid-context-data y)))))
+        (dummy '((:base-directory . "/tmp/nice"))))
+    (should (funcall agree nil " "))
+    (should (funcall agree nil '()))
+    (should (funcall agree nil '(:base-directory)))
+    (should (funcall agree nil '(:base-directory . "")))
+    (should (funcall agree nil '(:base-directory "hi")))
+    (should (funcall agree nil '((:base-directory "/tmp/nice"))))
+    (should (funcall agree dummy dummy))
+    (should (funcall agree nil '((:base-directory . :path))))
+    (should (funcall agree nil '((:base-directory))))))
+#+end_src
+
+#+begin_src elisp :results none
+
+(defun acct-rcpt--valid-context-data (context)
   "Validate a context"
   (let ((validate-length (lambda (x) (eq (length x) 2)))
         (validate-name acct-rcpt--valid-label-p)
