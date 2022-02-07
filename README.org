@@ -41,33 +41,39 @@ A /context/ is:
 3. where /body/ is an alist containing
    - =:base-directory= a string containing a path to the directory of the context
 
-**** Label Validation
+**** Context Label Validation
 
-In order to validate labels, we define *valid context label* to return a valid label or =nil= after verifying that:
+In order to validate context labels, we define *valid context label* function to return a 2-element list containing a valid label or =nil= as its first element and an optional string indicating the grounds on which validation failed after verifying that:
 1. input is a string
 2. trimmed string, i.e.: with leading and trailing whitespace removed, is of a nonzero length
 
-Our *valid context label* helper returns a valid string or =nil= and can be used by other functions to generate a valid context label.
+Our *valid context label* helper returns a /tuple/ of a string value and an error message which can be of the following form:
+- ~(nil ERROR)~, when the input was invalid where =ERROR= is a string detailing the problem
+- ~(STRING nil)~, when the input was valid and =STRING= is the cleaned-up version of the input for further use.
 
 #+begin_src elisp :results none
 (defun acct-rcpt--valid-context-label (label)
-  (cond ((not (stringp label)) nil)
-        ((= (length (string-clean-whitespace label)) 0) nil)
-        (t (string-clean-whitespace label))))
+  (cond ((not (stringp label))
+         '(nil "Label is not a string"))
+        ((= (length (string-clean-whitespace label)) 0)
+         '(nil "Stripped label is not of nonzero length"))
+        (t (list (string-clean-whitespace label) nil))))
 #+end_src
 
-The tests confirm typechecking (.e.g.: input is of type string) and whitespace trimming.
+The tests confirm that typechecking (.e.g.: input is of type string) and whitespace trimming work as expected. In order to minimize repetition, the =agree= helper is defined to verify agreement between an expected value and the output of the *valid context label* helper.
 
 #+begin_src elisp :results none
 (ert-deftest acct-rcpt--valid-context-label ()
-  (should (equal (acct-rcpt--valid-context-label 'two) nil))
-  (should (equal (acct-rcpt--valid-context-label 12) nil))
-  (should (equal (acct-rcpt--valid-context-label t) nil))
-  (should (equal (acct-rcpt--valid-context-label " ") nil))
-  (should (equal (acct-rcpt--valid-context-label "Info ") "Info"))
-  (should (equal (acct-rcpt--valid-context-label "$-sign") "$-sign"))
-  (should (equal (acct-rcpt--valid-context-label "  Hi-Tech Corp  ") "Hi-Tech Corp"))
-  (should (equal (acct-rcpt--valid-context-label "Hüçø Co") "Hüçø Co")))
+  (let ((agree (lambda (x y)
+                 (equal x (car (acct-rcpt--valid-context-label y))))))
+    (should (funcall agree nil 'two))
+    (should (funcall agree nil 12))
+    (should (funcall agree nil t))
+    (should (funcall agree nil " "))
+    (should (funcall agree "Info" "Info "))
+    (should (funcall agree "$-sign" "$-sign"))
+    (should (funcall agree "Hi-Tech Corp" "  Hi-Tech Corp  "))
+    (should (funcall agree "Hüçø Co" "Hüçø Co"))))
 #+end_src
 
 #+begin_src elisp :results none
