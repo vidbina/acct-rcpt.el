@@ -12,21 +12,21 @@ Since it is likely that one needs to maintain contexts for multiple organization
 
 #+begin_src elisp :tangle acct-rcpt.el
 (defcustom acct-rcpt-contexts '()
-"Accounting contexts"
-:type 'sexp
-:group 'acct-rcpt)
+  "Accounting contexts"
+  :type 'sexp
+  :group 'acct-rcpt)
 #+end_src
 
 ** TODO Define format for contexts
 
 #+begin_src elisp
-(let ((contexts '(("Acme Corp"
-                   (:base-directory "/tmp/fin/Acme Corp"))
-                  ("Muster GmbH"
-                   (:base-directory "/tmp/fin/Muster GmbH"))
-                  ("Voorbeeld BV"
-                   (:base-directory "/tmp/blah/voorbeeld-bv")))))
-  (assoc "Voorbeeld BV" contexts))
+(let ((contexts '(("Acme Corp" .
+                   (:base-directory . "/tmp/fin/Acme Corp"))
+                  ("Muster GmbH" .
+                   (:base-directory . "/tmp/fin/Muster GmbH"))
+                  ("Voorbeeld BV" .
+                   (:base-directory . "/tmp/blah/voorbeeld-bv")))))
+  (alist-get "Voorbeeld BV" contexts nil nil 'equal))
 #+end_src
 
 #+begin_src elisp :results none
