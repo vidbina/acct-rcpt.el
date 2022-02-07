@@ -1,0 +1,129 @@
+#+TITLE: Accounting Receipts Helper
+
+In order to simplify monthly reporting of receipts and invoices to my accountant, I've written a series of functions that help me in marking emails with invoices or receipts, collecting the needed assets and compiling the deliverables to the accountant. These scripts minimize a fair amount of toil.
+
+* Conventions
+
+For convenience (brevity, rather) we're not going to use =accounting-receipts-helper= as a prefix but will use =acct-rcpt= instead.
+
+* TODO Manage Accounting Context
+
+Since it is likely that one needs to maintain contexts for multiple organizations, the user should be able to define these contexts and switch between them whenever necessary.
+
+#+begin_src elisp :tangle acct-rcpt.el
+(defcustom acct-rcpt-contexts '()
+"Accounting contexts"
+:type 'sexp
+:group 'acct-rcpt)
+#+end_src
+
+** TODO Define format for contexts
+
+#+begin_src elisp
+(let ((contexts '(("Acme Corp"
+                   (:base-directory "/tmp/fin/Acme Corp"))
+                  ("Muster GmbH"
+                   (:base-directory "/tmp/fin/Muster GmbH"))
+                  ("Voorbeeld BV"
+                   (:base-directory "/tmp/blah/voorbeeld-bv")))))
+  (assoc "Voorbeeld BV" contexts))
+#+end_src
+
+#+begin_src elisp :results none
+(defun acct-rcpt--validate-context-body (context-body))
+#+end_src
+
+*** Context Validation
+
+A /context/ is:
+1. a list consistent of 2 elements, /name/ and /body/
+2. where /name/ is an alphanumeric string
+3. where /body/ is an alist containing
+   - =:base-directory= a string containing a path to the directory of the context
+
+**** Label Validation
+
+In order to validate labels, we define *valid context label* to return a valid label or =nil= after verifying that:
+1. input is a string
+2. trimmed string, i.e.: with leading and trailing whitespace removed, is of a nonzero length
+
+Our *valid context label* helper returns a valid string or =nil= and can be used by other functions to generate a valid context label.
+
+#+begin_src elisp :results none
+(defun acct-rcpt--valid-context-label (label)
+  (cond ((not (stringp label)) nil)
+        ((= (length (string-clean-whitespace label)) 0) nil)
+        (t (string-clean-whitespace label))))
+#+end_src
+
+The tests confirm typechecking (.e.g.: input is of type string) and whitespace trimming.
+
+#+begin_src elisp :results none
+(ert-deftest acct-rcpt--valid-context-label ()
+  (should (equal (acct-rcpt--valid-context-label 'two) nil))
+  (should (equal (acct-rcpt--valid-context-label 12) nil))
+  (should (equal (acct-rcpt--valid-context-label t) nil))
+  (should (equal (acct-rcpt--valid-context-label " ") nil))
+  (should (equal (acct-rcpt--valid-context-label "Info ") "Info"))
+  (should (equal (acct-rcpt--valid-context-label "$-sign") "$-sign"))
+  (should (equal (acct-rcpt--valid-context-label "  Hi-Tech Corp  ") "Hi-Tech Corp"))
+  (should (equal (acct-rcpt--valid-context-label "Hüçø Co") "Hüçø Co")))
+#+end_src
+
+#+begin_src elisp :results none
+(defun acct-rcpt--valid-data-p (label)
+  nil)
+
+(defun acct-rcpt--valid-context-p (context)
+  "Validate a context"
+  (let ((validate-length (lambda (x) (eq (length x) 2)))
+        (validate-name acct-rcpt--valid-label-p)
+        (validate-data (lambda (x) t)))
+    (cond ((not (funcall validate-length context)) nil)
+          ((not (acct-rcpt--valid-label-p context)) nil)
+          ((not (funcall validate-data context)) nil)
+          (t))))
+#+end_src
+
+#+begin_src elisp :results none
+(ert-deftest acct-rcpt--valid-context-p ()
+  (let ((context-list '("Acme Corp" (:base-directory "/tmp/acme")))
+        (context-name-empty '("" (:base-directory "/tmp/acme")))
+        (context-data-only '((:base-directory "/tmp/acme")))
+        (context-name-only '("Acme Corp"))
+        (empty-list '()))
+    (should (eq (acct-rcpt--valid-context-p context-list) t))
+    (should (eq (acct-rcpt--valid-context-p context-name-empty) t))
+    (should (eq (acct-rcpt--valid-context-p context-data-only) t))
+    (should (eq (acct-rcpt--valid-context-p context-name-only) nil))))
+#+end_src
+
+#+begin_src elisp :results none
+(defun acct-rcpt--validate-contexts (contexts)
+  (message (format "CONTEXTS %S and %S" (car contexts)))
+  (cl-every (lambda (x) (eq x x)) (seq-map (lambda (x) t) contexts)))
+#+end_src
+
+#+begin_src elisp :results none
+(ert-deftest acct-rcpt--validate-contexts ()
+  "Validate the structure of the contexts"
+  (let ((valid-contexts '(("Acme Corp"
+                          (:base-directory "/tmp/fin/Acme Corp"))
+                         ("Muster GmbH"
+                          (:base-directory "/tmp/fin/Muster GmbH"))
+                         ("Voorbeeld BV"
+                          (:base-directory "/tmp/blah/voorbeeld-bv")))))
+    (should (equal (acct-rcpt--validate-contexts valid-contexts) t))))
+#+end_src
+
+** TODO Define more specific type for contexts
+
+* TODO Create Directory
+
+#+begin_src elisp :tangle acct-rcpt.el
+
+#+end_src
+
+* TODO Collect Artifacts (Receipts and Invoices)
+* TODO Review Collection
+* TODO Send Collection
