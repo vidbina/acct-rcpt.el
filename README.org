@@ -2,11 +2,27 @@
 
 In order to simplify monthly reporting of receipts and invoices to my accountant, I've written a series of functions that help me in marking emails with invoices or receipts, collecting the needed assets and compiling the deliverables to the accountant. These scripts minimize a fair amount of toil.
 
-* Conventions
+* Background
+
+** Package Prefix
 
 For convenience (brevity, rather) we're not going to use =accounting-receipts-helper= as a prefix but will use =acct-rcpt= instead.
 
-* TODO Manage Accounting Context
+** Source Files
+
+The logic will be defined in file:acct-rcpt.el and tests will be defined in file:acct-rcpt-test.el. These source files will be produced by tangling this literate program. In Emacs this can be done by calling src_elisp[:results none]{(org-babel-tangle)} to produce all source needed files.
+
+*** Tests
+
+For testing, the ERT package is utilized and the source file is loaded prior to the definition of all of our test cases.
+
+#+begin_src elisp :tangle acct-rcpt-test.el
+(require 'ert)
+
+(load-file "acct-rcpt.el")
+#+end_src
+
+* Contexts
 
 Since it is likely that one needs to maintain contexts for multiple organizations, the user should be able to define these contexts and switch between them whenever necessary.
 
@@ -17,149 +33,193 @@ Since it is likely that one needs to maintain contexts for multiple organization
   :group 'acct-rcpt)
 #+end_src
 
-** TODO Define format for contexts
+** Contexts Data Structure
 
-#+begin_src elisp
-(let ((contexts '(("Acme Corp" .
-                   (:base-directory . "/tmp/fin/Acme Corp"))
-                  ("Muster GmbH" .
-                   (:base-directory . "/tmp/fin/Muster GmbH"))
-                  ("Voorbeeld BV" .
-                   (:base-directory . "/tmp/blah/voorbeeld-bv")))))
-  (alist-get "Voorbeeld BV" contexts nil nil 'equal))
-#+end_src
+In order to represent contexts, [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Association-Lists.html][alists (association lists)]] will be utilized since they provide a clear structure for key-value pairs, i.e.: the cons cell, where lists or plists may be insufficiently constrained. A context is therefore represented as a cons cell consisting of the context name and the context configuration data which itself is a list of cons cells of configuration keys and configurationn values.
 
+The =acct-rcpt-contexts= custom variable will simply contain a list of these /context/ cons cells. The following snippet demonstrates a valid contexts data structure:
+
+#+NAME: example-contexts
 #+begin_src elisp :results none
-(defun acct-rcpt--validate-context-body (context-body))
+'(("Acme Corp" .
+   ((:base-directory . "/tmp/fin/Acme Corp")))
+  ("Muster GmbH" .
+   ((:base-directory . "/tmp/fin/Muster GmbH")))
+  ("Voorbeeld BV" .
+   ((:base-directory . "/tmp/blah/voorbeeld-bv"))))
 #+end_src
 
-*** Context Validation
+*** Validating Contexts
 
-A /context/ is:
-1. a list consistent of 2 elements, /name/ and /body/
-2. where /name/ is an alphanumeric string
-3. where /body/ is an alist containing
+Some validation helpers are defined in order to facilitate health-checking of the structure of contexts prior to attempts to conduct any work based on these inputs.
+
+#+NAME: contexts-validator
+#+begin_src elisp :results none :noweb yes :tangle acct-rcpt.el
+<<context-validator>>
+
+(defun acct-rcpt--valid-contexts (contexts)
+  (cond ((not (and (listp contexts) (cl-every 'consp contexts)))
+         (cons nil (format "Contexts %S not a valid alist" contexts)))
+        ((= 0 (length contexts))
+         (cons nil (format "Contexts %S of zero length" contexts)))
+        ((let* ((cs (cl-map 'list 'acct-rcpt--valid-context contexts))
+                (keys (cl-map 'list 'car cs))
+                (vals (cl-map 'list 'cdr cs)))
+           (when (seq-contains-p keys nil)
+             (cons nil vals))))
+        (t (cons contexts nil))))
+#+end_src
+
+During testing, checks are conducted on empty lists and non-list inputs in order to verify that the *valid contexts* (plural) helper behaves as expected. As the *valid context* (singular) helper is called to check every individual context more detailed context-level tests will be constrained to this this helper.
+
+#+begin_src elisp :results none :noweb yes :tangle acct-rcpt-test.el
+<<context-validator-test>>
+
+(ert-deftest acct-rcpt--valid-contexts ()
+  ;; invalid contexts, check that car (key) is nil
+  (should (eq nil (car (acct-rcpt--valid-contexts '()))))
+  (should (eq nil (car (acct-rcpt--valid-contexts (list "accounting" "is" "not" "fun")))))
+  (should (eq nil (car (acct-rcpt--valid-contexts 12))))
+  ;; valid contexts, check that cdr (datum) is nil
+  (should (eq nil (cdr
+                   (acct-rcpt--valid-contexts
+                    <<example-contexts>>)))))
+#+end_src
+
+**** Validating a single Context
+
+As previously mentioned, a /context/ is an alist consisting of:
+1. the label of the context as a string
+2. the configuration of a context as an alist composed of cons cells with the following keys:
    - =:base-directory= a string containing a path to the directory of the context
 
-**** Context Label Validation
+In order to validate a context, the *valid context* helper accepts a /context/ and returns a cons cell that can be either of the following options:
+1. ~(CONTEXT . nil)~, upon a valid context where
+   - =CONTEXT= is the input context, simply passed-through
+2. ~(nil . ERROR)~ when the input is invalid where
+   - =ERROR= is a single string or a list of strings indicating why the input is invalid
 
-In order to validate context labels, we define *valid context label* function to return a 2-element list containing a valid label or =nil= as its first element and an optional string indicating the grounds on which validation failed after verifying that:
+The *valid context* helper checks the label and the configuration through the *valid context label* and *valid context config* helpers.
+
+#+NAME: context-validator
+#+begin_src elisp :noweb yes :results none
+<<context-label-validator>>
+
+<<context-config-validator>>
+
+(defun acct-rcpt--valid-context (context)
+  (cond ((not (consp context))
+         (cons nil (format "Context %S not a cons cell" context)))
+        ((let ((label (acct-rcpt--valid-context-label (car context)))
+               (data (acct-rcpt--valid-context-config (cdr context))))
+           (cons (when (and (car label) (car data)) context)
+                 (seq-filter (lambda (x)
+                               (not (eq nil x)))
+                             (list (cdr label) (cdr data))))))
+        (t (cons context nil))))
+#+end_src
+
+For simplificies sake, the tests are constrained to verifying the nil-ness of the context and error positions of the returned cons cell in a select few scenarios that have been selected based on the logic implemented in the previously listed function. A broader sweep of testing scenarios are conducted at the level of the more specialized validation functions.
+
+#+NAME: context-validator-test
+#+begin_src elisp :results none :noweb yes
+<<context-label-validator-test>>
+
+<<context-config-validator-test>>
+
+(ert-deftest acct-rcpt--valid-context ()
+  ;; valid input
+  (should (not (eq nil (car (acct-rcpt--valid-context (car
+                                                       <<example-contexts>>))))))
+  (should (eq nil (cdr (acct-rcpt--valid-context (car
+                                                  <<example-contexts>>)))))
+
+  ;; invalid input
+  (should (not (eq nil (cdr (acct-rcpt--valid-context '())))))
+  (should (eq nil (car (acct-rcpt--valid-context '()))))
+
+  (should (not (eq nil (cdr (acct-rcpt--valid-context 12)))))
+  (should (eq nil (car (acct-rcpt--valid-context 12)))))
+#+end_src
+
+***** Validating a Context Label
+
+In order to validate context labels, the *valid context label* function return a 2-element list containing a valid label or =nil= as its first element and an optional string indicating the grounds on which validation failed after verifying that:
 1. input is a string
 2. trimmed string, i.e.: with leading and trailing whitespace removed, is of a nonzero length
 
-Our *valid context label* helper returns a /tuple/ of a string value and an error message which can be of the following form:
-- ~(nil ERROR)~, when the input was invalid where =ERROR= is a string detailing the problem
-- ~(STRING nil)~, when the input was valid and =STRING= is the cleaned-up version of the input for further use.
+The *valid context label* helper returns a /tuple/ of a string value and an error message which can be of the following form:
+- ~(nil . ERROR)~, when the input was invalid where =ERROR= is a string detailing the problem
+- ~(STRING . nil)~, when the input was valid and =STRING= is the cleaned-up version of the input for further use.
 
+#+NAME: context-label-validator
 #+begin_src elisp :results none
 (defun acct-rcpt--valid-context-label (label)
   (cond ((not (stringp label))
-         '(nil "Label is not a string"))
+         (cons nil (format "Label %S is not a string" label)))
         ((= (length (string-clean-whitespace label)) 0)
-         '(nil "Stripped label is not of nonzero length"))
-        (t (list (string-clean-whitespace label) nil))))
+         (cons nil (format "Stripped label %S is not of nonzero length" label)))
+        (t
+         (cons (string-clean-whitespace label) nil))))
 #+end_src
 
-The tests confirm that typechecking (.e.g.: input is of type string) and whitespace trimming work as expected. In order to minimize repetition, the =agree= helper is defined to verify agreement between an expected value and the output of the *valid context label* helper.
+The tests confirm that typechecking (.e.g.: input is of type string) and whitespace trimming work as expected.
 
+#+NAME: context-label-validator-test
 #+begin_src elisp :results none
 (ert-deftest acct-rcpt--valid-context-label ()
-  (let ((agree (lambda (x y)
-                 (equal x (car (acct-rcpt--valid-context-label y))))))
-    (should (funcall agree nil 'two))
-    (should (funcall agree nil 12))
-    (should (funcall agree nil t))
-    (should (funcall agree nil " "))
-    (should (funcall agree "Info" "Info "))
-    (should (funcall agree "$-sign" "$-sign"))
-    (should (funcall agree "Hi-Tech Corp" "  Hi-Tech Corp  "))
-    (should (funcall agree "Hüçø Co" "Hüçø Co"))))
+;; make more robust by testing car and cdr
+  (should (equal nil (car (acct-rcpt--valid-context-label 'two))))
+  (should (equal nil (car (acct-rcpt--valid-context-label 12))))
+  (should (equal nil (car (acct-rcpt--valid-context-label t))))
+  (should (equal nil (car (acct-rcpt--valid-context-label " "))))
+  (should (equal "Info" (car (acct-rcpt--valid-context-label "Info "))))
+  (should (equal "$-sign" (car (acct-rcpt--valid-context-label "$-sign"))))
+  (should (equal "Hi-Tech Corp" (car (acct-rcpt--valid-context-label "  Hi-Tech Corp  "))))
+  (should (equal "Hüçø Co" (car (acct-rcpt--valid-context-label "Hüçø Co")))))
 #+end_src
 
-**** Context Data Validation
+***** Validating a Context Configuration
 
 In order to valildate context data, we define a *valid context data* function to return a 2-element list containing a valid context data alist or =nil= as its first element and an optional string indicating the grounds on which validation failed after verifying that:
 1. input is an alist (association list)
 2. input alist has the =:base-directory= key with a /string/ value
 
+The *valid context data* helper returns a /cons cell/ of a string value and an error message which can be of the following form:
+- ~(nil . ERROR)~, when the input was invalid where =ERROR= is a string detailing the problem
+- ~(STRING . nil)~, when the input was valid and =STRING= is the cleaned-up version of the input for further use.
+
+#+NAME: context-config-validator
 #+begin_src elisp :results none
-(defun acct-rcpt--valid-context-data (data)
+(defun acct-rcpt--valid-context-config (data)
   (cond ((not (and (listp data) (cl-every 'consp data)))
-         '(nil "Context data is not a valid alist"))
+         (cons nil (format "Context data %S is not a valid alist" data)))
         ((not (stringp (alist-get :base-directory data)))
-         '(nil "Context data lacks :base-directory key with a string value"))
-        (t (list data nil))))
+         (cons nil (format "Context data %S lacks :base-directory key with a string value" data)))
+        (t
+         (cons data nil))))
 #+end_src
 
 The tests confirm that "typechecking" (i.e.: input is an alist) and schema validation (structure) work as expected. As in the [[*Context Label Validation][label validation helper]], we define an =agree= helper to verify agreement between an expected value and the output of the *valid context label* helper.
 
+#+NAME: context-config-validator-test
 #+begin_src elisp :results none
-(ert-deftest acct-rcpt--valid-context-data ()
-  (let ((agree (lambda (x y)
-                 (equal x (car (acct-rcpt--valid-context-data y)))))
-        (dummy '((:base-directory . "/tmp/nice"))))
-    (should (funcall agree nil " "))
-    (should (funcall agree nil '()))
-    (should (funcall agree nil '(:base-directory)))
-    (should (funcall agree nil '(:base-directory . "")))
-    (should (funcall agree nil '(:base-directory "hi")))
-    (should (funcall agree nil '((:base-directory "/tmp/nice"))))
-    (should (funcall agree dummy dummy))
-    (should (funcall agree nil '((:base-directory . :path))))
-    (should (funcall agree nil '((:base-directory))))))
-#+end_src
-
-#+begin_src elisp :results none
-
-(defun acct-rcpt--valid-context-data (context)
-  "Validate a context"
-  (let ((validate-length (lambda (x) (eq (length x) 2)))
-        (validate-name acct-rcpt--valid-label-p)
-        (validate-data (lambda (x) t)))
-    (cond ((not (funcall validate-length context)) nil)
-          ((not (acct-rcpt--valid-label-p context)) nil)
-          ((not (funcall validate-data context)) nil)
-          (t))))
-#+end_src
-
-#+begin_src elisp :results none
-(ert-deftest acct-rcpt--valid-context-p ()
-  (let ((context-list '("Acme Corp" (:base-directory "/tmp/acme")))
-        (context-name-empty '("" (:base-directory "/tmp/acme")))
-        (context-data-only '((:base-directory "/tmp/acme")))
-        (context-name-only '("Acme Corp"))
-        (empty-list '()))
-    (should (eq (acct-rcpt--valid-context-p context-list) t))
-    (should (eq (acct-rcpt--valid-context-p context-name-empty) t))
-    (should (eq (acct-rcpt--valid-context-p context-data-only) t))
-    (should (eq (acct-rcpt--valid-context-p context-name-only) nil))))
-#+end_src
-
-#+begin_src elisp :results none
-(defun acct-rcpt--validate-contexts (contexts)
-  (message (format "CONTEXTS %S and %S" (car contexts)))
-  (cl-every (lambda (x) (eq x x)) (seq-map (lambda (x) t) contexts)))
-#+end_src
-
-#+begin_src elisp :results none
-(ert-deftest acct-rcpt--validate-contexts ()
-  "Validate the structure of the contexts"
-  (let ((valid-contexts '(("Acme Corp"
-                          (:base-directory "/tmp/fin/Acme Corp"))
-                         ("Muster GmbH"
-                          (:base-directory "/tmp/fin/Muster GmbH"))
-                         ("Voorbeeld BV"
-                          (:base-directory "/tmp/blah/voorbeeld-bv")))))
-    (should (equal (acct-rcpt--validate-contexts valid-contexts) t))))
+(ert-deftest acct-rcpt--valid-context-config ()
+  (let ((dummy '((:base-directory . "/tmp/nice"))))
+    (should (equal nil (car (acct-rcpt--valid-context-config " "))))
+    (should (equal nil (car (acct-rcpt--valid-context-config '()))))
+    (should (equal nil (car (acct-rcpt--valid-context-config '(:base-directory)))))
+    (should (equal nil (car (acct-rcpt--valid-context-config '(:base-directory . "")))))
+    (should (equal nil (car (acct-rcpt--valid-context-config '(:base-directory "hi")))))
+    (should (equal nil (car (acct-rcpt--valid-context-config '((:base-directory "/tmp/nice"))))))
+    (should (equal dummy (car (acct-rcpt--valid-context-config dummy))))
+    (should (equal nil (car (acct-rcpt--valid-context-config '((:base-directory . :path))))))
+    (should (equal nil (car (acct-rcpt--valid-context-config '((:base-directory))))))))
 #+end_src
 
 ** TODO Define more specific type for contexts
 
 * TODO Create Directory
-
-#+begin_src elisp :tangle acct-rcpt.el
-
-#+end_src
 
 * TODO Collect Artifacts (Receipts and Invoices)
 * TODO Review Collection
