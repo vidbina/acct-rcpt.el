@@ -25,6 +25,11 @@
 
 ;;; Code:
 
+(defgroup acct-rcpt nil
+  "Accounting receipt processing helpers"
+  :prefix "acct-rcpt-"
+  :version "29.0.50")
+
 (defcustom acct-rcpt-contexts '()
   "Accounting contexts"
   :type 'sexp

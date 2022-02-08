@@ -20,6 +20,13 @@ Hopefully this package helps reduce a fair amount of toil. 😅
 
 For convenience (brevity, rather) we're not going to use =accounting-receipts-helper= as a prefix but will use =acct-rcpt= instead.
 
+#+begin_src elisp :noweb-ref custom :noweb-sep "\n\n"
+(defgroup acct-rcpt nil
+  "Accounting receipt processing helpers"
+  :prefix "acct-rcpt-"
+  :version "29.0.50")
+#+end_src
+
 ** Source Files
 
 The logic will be defined in file:acct-rcpt.el and tests will be defined in file:acct-rcpt-test.el. These source files will be produced by tangling this literate program. In Emacs this can be done by calling src_elisp[:results none]{(org-babel-tangle)} to produce all source needed files.
