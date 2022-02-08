@@ -1,3 +1,30 @@
+;;; acct-rcpt.el --- accounting receipts helper -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2021  David Asabina
+
+;; Author: David Asabina <david@asabina.de>
+;; Keywords: lisp
+;; Version: 0.0.1
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Helpers to aid in handling of monthly accounting duties
+
+;;; Code:
+
 (defcustom acct-rcpt-contexts '()
   "Accounting contexts"
   :type 'sexp
@@ -41,3 +68,6 @@
            (when (seq-contains-p keys nil)
              (cons nil vals))))
         (t (cons contexts nil))))
+
+(provide 'acct-rcpt)
+;;; acct-rcpt.el ends here
