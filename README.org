@@ -1,6 +1,18 @@
 #+TITLE: Accounting Receipts Helper
 
-In order to simplify monthly reporting of receipts and invoices to my accountant, I've written a series of functions that help me in marking emails with invoices or receipts, collecting the needed assets and compiling the deliverables to the accountant. These scripts minimize a fair amount of toil.
+Some logic to simplify monthly reporting of receipts 🧾 and invoices 🎁 for accounting.
+
+The monthly dance may typically involve:
+1. marking of emails with invoices or receipts,
+2. collecting needed assets into a central location,
+3. curating the collection by reviewing it for correctness, annotating documents and renaming files
+4. compiling the deliverables into a user-friendly package for the accountant (perhap a zip-file) and
+5. sending the goods for processing before the final step can ensue:
+6. 💸 +profit+ taxes
+
+Hopefully this package helps reduce a fair amount of toil. 😅
+
+* TODO Usage
 
 * Background
 
@@ -77,7 +89,7 @@ Since it is likely that one needs to maintain contexts for multiple organization
 
 ** Contexts Data Structure
 
-In order to represent contexts, [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Association-Lists.html][alists (association lists)]] will be utilized since they provide a clear structure for key-value pairs, i.e.: the cons cell, where lists or plists may be insufficiently constrained. A context is therefore represented as a cons cell consisting of the context name and the context configuration data which itself is a list of cons cells of configuration keys and configurationn values.
+In order to represent contexts, [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Association-Lists.html][alists (association lists)]] will be utilized since they provide a clear structure for key-value pairs, i.e.: the cons cell, where lists or plists may be insufficiently constrained. A context is therefore represented as a cons cell consisting of the context name and the context configuration data which itself is a list of cons cells of configuration keys and configuration values.
 
 The =acct-rcpt-contexts= custom variable will simply contain a list of these /context/ cons cells. The following snippet demonstrates a valid contexts data structure:
 
@@ -266,3 +278,7 @@ The tests confirm that "typechecking" (i.e.: input is an alist) and schema valid
 * TODO Collect Artifacts (Receipts and Invoices)
 * TODO Review Collection
 * TODO Send Collection
+
+* Footnotes
+
+[fn:1] https://www.emacswiki.org/emacs/MakingPackages
