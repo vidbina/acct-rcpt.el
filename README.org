@@ -163,7 +163,7 @@ As previously mentioned, a /context/ is an alist consisting of:
 2. the configuration of a context as an alist composed of cons cells with the following keys:
    - =:base-directory= a string containing a path to the directory of the context
 
-In order to validate a context, the *valid context* helper accepts a /context/ and returns a cons cell that can be either of the following options:
+In order to validate a context, the *valid context* helper accepts a /context/ and returns a cons cell that is of the following form:
 1. ~(CONTEXT . nil)~, upon a valid context where
    - =CONTEXT= is the input context, simply passed-through
 2. ~(nil . ERROR)~ when the input is invalid where
@@ -218,7 +218,7 @@ In order to validate context labels, the *valid context label* function return a
 1. input is a string
 2. trimmed string, i.e.: with leading and trailing whitespace removed, is of a nonzero length
 
-The *valid context label* helper returns a /tuple/ of a string value and an error message which can be of the following form:
+The *valid context label* helper returns a cons cell of a string value and an error message and is of the following form:
 - ~(nil . ERROR)~, when the input was invalid where =ERROR= is a string detailing the problem
 - ~(STRING . nil)~, when the input was valid and =STRING= is the cleaned-up version of the input for further use.
 
@@ -251,11 +251,11 @@ The tests confirm that typechecking (.e.g.: input is of type string) and whitesp
 
 ***** Validating a Context Configuration
 
-In order to valildate context data, we define a *valid context data* function to return a 2-element list containing a valid context data alist or =nil= as its first element and an optional string indicating the grounds on which validation failed after verifying that:
+In order to validate a context configuration, we define a *valid context config* function to return a 2-element list containing a valid context data alist or =nil= as its first element and an optional string indicating the grounds on which validation failed after verifying that:
 1. input is an alist (association list)
 2. input alist has the =:base-directory= key with a /string/ value
 
-The *valid context data* helper returns a /cons cell/ of a string value and an error message which can be of the following form:
+The *valid context data* helper returns a cons cell of a string value and an error message and is of the following form:
 - ~(nil . ERROR)~, when the input was invalid where =ERROR= is a string detailing the problem
 - ~(STRING . nil)~, when the input was valid and =STRING= is the cleaned-up version of the input for further use.
 
