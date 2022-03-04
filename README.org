@@ -83,6 +83,15 @@ For testing, the ERT package is utilized and the source file is loaded prior to 
 <<test>>
 #+end_src
 
+**** TODO Test Runner
+
+see [[https://www.gnu.org/software/emacs/manual/html_node/ert/Running-Tests-in-Batch-Mode.html][Running Tests in Batch Mode (Emacs Manual)]]
+
+#+begin_src shell :results none
+emacs -batch -l ert -l acct-rcpt-test.el \
+      --eval "(let ((ert-quiet t)) (ert-run-tests-batch-and-exit))"
+#+end_src
+
 * Contexts
 
 Since it is likely that one needs to maintain contexts for multiple organizations, the user should be able to define these contexts and switch between them whenever necessary.
