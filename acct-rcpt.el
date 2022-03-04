@@ -1,4 +1,4 @@
-;;; acct-rcpt.el --- accounting receipts helper -*- lexical-binding: t; -*-
+;;; acct-rcpt.el --- accounting receipts helper      -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2021  David Asabina
 

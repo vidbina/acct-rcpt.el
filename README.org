@@ -36,7 +36,7 @@ The logic will be defined in file:acct-rcpt.el and tests will be defined in file
 The structure of the app is informed by some of the recommendations[fn:1].
 
 #+begin_src elisp :noweb yes :tangle acct-rcpt.el
-;;; acct-rcpt.el --- accounting receipts helper -*- lexical-binding: t; -*-
+;;; acct-rcpt.el --- accounting receipts helper      -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2021  David Asabina
 
@@ -278,13 +278,20 @@ The tests confirm that "typechecking" (i.e.: input is an alist) and schema valid
     (should (equal nil (car (acct-rcpt--valid-context-config '((:base-directory))))))))
 #+end_src
 
-** TODO Define more specific type for contexts
+* Create Directory
 
-* TODO Create Directory
+In order to simplify work for accounting it may be necessary to formulate a clear directory structure. This can be achieved by defining a reference folder which to copy over along with some operations that need to be performed on top of that reference folder.
+
+** Directory Setup Configuration
+
+- template directory
+- custom rules on how to change the directory structure
 
 * TODO Collect Artifacts (Receipts and Invoices)
 * TODO Review Collection
 * TODO Send Collection
+
+* TODO Figure out whether autoloads are useful
 
 * Footnotes
 
