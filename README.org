@@ -92,9 +92,9 @@ emacs -batch -l ert -l acct-rcpt-test.el \
       --eval "(let ((ert-quiet t)) (ert-run-tests-batch-and-exit))"
 #+end_src
 
-* Contexts
+* TODO [50%] Contexts
 
-Since it is likely that one needs to maintain contexts for multiple organizations, the user should be able to define these contexts and switch between them whenever necessary.
+In order to keep accounting affairs neatly isolated, one can define different accounting contexts. A context can be unique to an organization, a department or a project. This design decision is wholly yours as long as you try to keep directories unique to a single context.
 
 #+begin_src elisp :noweb-ref custom
 (defcustom acct-rcpt-contexts '()
@@ -103,7 +103,7 @@ Since it is likely that one needs to maintain contexts for multiple organization
   :group 'acct-rcpt)
 #+end_src
 
-** Contexts Data Structure
+** DONE Define Contexts
 
 In order to represent contexts, [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Association-Lists.html][alists (association lists)]] will be utilized since they provide a clear structure for key-value pairs, i.e.: the cons cell, where lists or plists may be insufficiently constrained. A context is therefore represented as a cons cell consisting of the context name and the context configuration data which itself is a list of cons cells of configuration keys and configuration values.
 
