@@ -287,18 +287,39 @@ The tests confirm that "typechecking" (i.e.: input is an alist) and schema valid
     (should (equal nil (car (acct-rcpt--valid-context-config '((:base-directory))))))))
 #+end_src
 
-* Create Directory
+** TODO Select Context
 
-In order to simplify work for accounting it may be necessary to formulate a clear directory structure. This can be achieved by defining a reference folder which to copy over along with some operations that need to be performed on top of that reference folder.
+Use completion or some menu-like interface to prompt the user for the context and enable the selected context.
 
-** Directory Setup Configuration
+* TODO [0%] Directory
 
-- template directory
-- custom rules on how to change the directory structure
+In order to simplify work for accounting it may be necessary to formulate a clear directory structure for every accounting period. This can be achieved by defining a reference folder which is to be copied over as a reference or baseline for every new accounting period. Additionally, it may be necessary to define some operations to be performed on top of baseline directory structure.
 
-* TODO Collect Artifacts (Receipts and Invoices)
-* TODO Review Collection
-* TODO Send Collection
+** TODO Create period directory from reference directory
+
+** TODO Allow for custom logic to modify /new accounting period/ directory
+
+* TODO [0%] Receipts and Invoices
+
+** TODO Read transactions from a spreadsheet
+
+* TODO [0%] Review
+
+** TODO Check completeness
+
+Based on the accounting spreadsheet, verify that all documents exist.
+
+* TODO [0%] Report accounting period
+
+** To simplify communication with the accounting folks, a report file is needed that is easy to read and where associated attachments are easy to open.
+
+** TODO Compose reporting package
+
+Write report for the given accounting period with all attachments included to a temporary directory.
+
+** TODO Compose reporting e-mail from template
+
+Create reporting e-mail from a template and attach reporting package to said email.
 
 * TODO Figure out whether autoloads are useful
 
