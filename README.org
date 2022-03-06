@@ -303,6 +303,46 @@ In order to simplify work for accounting it may be necessary to formulate a clea
 
 ** TODO Read transactions from a spreadsheet
 
+#+NAME: transactions-template
+#+begin_src org
+|   |   Balance | Diff | Date             | File              | Description      |
+| ! |   Balance | Diff | Date             | File              | Description      |
+| / |           |      |                  | <6>               |                  |
+|   | 100000.00 |    0 | [2022-01-01 Sat] |                   | starting balance |
+|---+-----------+------+------------------+-------------------+------------------|
+| # | 103500.00 | 3500 |                  | [[file:acct-rcpt.el]] |                  |
+| # | 108500.00 | 5000 |                  |                   |                  |
+| # | 107900.00 | -600 |                  |                   |                  |
+|---+-----------+------+------------------+-------------------+------------------|
+| # | 107900.00 |    0 | [2022-01-31 Mon] |                   | ending balance   |
+,#+TBLFM: $2=@-1+$+1;%.2f
+#+end_src
+
+#+begin_src elisp :results none :noweb yes :noweb-ref app
+(defun acct-rcpt-read-table (data)
+  "Read entries from accounting table"
+  (car data))
+#+end_src
+
+
+#+begin_src elisp :results none :noweb yes :noweb-ref app
+(defun acct-rcpt--experiment-1 ()
+  (string-join
+          (list
+           "#+NAME: transactions" "
+<<transactions-template>>")
+          "\n"))
+#+end_src
+
+*** TODO Study how to iterate over a named table
+
+#+begin_src elisp :var data=transactions
+(acct-rcpt-read-table data)
+#+end_src
+
+#+RESULTS:
+|   | Balance | Diff | Date | File | Description |
+
 * TODO [0%] Review
 
 ** TODO Check completeness
