@@ -16,26 +16,13 @@ Hopefully this package helps reduce a fair amount of toil. 😅
 
 * Background
 
-** Package Prefix
-
-For convenience (brevity, rather) we're not going to use =accounting-receipts-helper= as a prefix but will use =acct-rcpt= instead.
-
-#+begin_src elisp :noweb-ref custom :noweb-sep "\n\n"
-(defgroup acct-rcpt nil
-  "Accounting receipt processing helpers"
-  :prefix "acct-rcpt-"
-  :version "29.0.50")
-#+end_src
-
-** Source Files
-
 The logic will be defined in file:acct-rcpt.el and tests will be defined in file:acct-rcpt-test.el. These source files will be produced by tangling this literate program. In Emacs this can be done by calling src_elisp[:results none]{(org-babel-tangle)} to produce all source needed files.
 
-*** Application
+** Application
 
 The structure of the app is informed by some of the recommendations[fn:1].
 
-#+begin_src elisp :noweb yes :tangle acct-rcpt.el
+#+begin_src elisp :noweb yes :tangle acct-rcpt.el :noweb-sep "\n\n"
 ;;; acct-rcpt.el --- accounting receipts helper      -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2021  David Asabina
@@ -71,7 +58,7 @@ The structure of the app is informed by some of the recommendations[fn:1].
 ;;; acct-rcpt.el ends here
 #+end_src
 
-*** Tests
+** Tests
 
 For testing, the ERT package is utilized and the source file is loaded prior to the definition of all of our test cases.
 
@@ -83,13 +70,24 @@ For testing, the ERT package is utilized and the source file is loaded prior to 
 <<test>>
 #+end_src
 
-**** TODO Test Runner
+*** TODO Test Runner
 
 see [[https://www.gnu.org/software/emacs/manual/html_node/ert/Running-Tests-in-Batch-Mode.html][Running Tests in Batch Mode (Emacs Manual)]]
 
 #+begin_src shell :results none
 emacs -batch -l ert -l acct-rcpt-test.el \
       --eval "(let ((ert-quiet t)) (ert-run-tests-batch-and-exit))"
+#+end_src
+
+** Package Prefix
+
+For convenience (brevity, rather) we're not going to use =accounting-receipts-helper= as a prefix but will use =acct-rcpt= instead.
+
+#+begin_src elisp :noweb-ref custom :noweb-sep "\n\n"
+(defgroup acct-rcpt nil
+  "Accounting receipt processing helpers"
+  :prefix "acct-rcpt-"
+  :version "29.0.50")
 #+end_src
 
 * TODO [50%] Contexts
