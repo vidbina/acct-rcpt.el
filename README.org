@@ -342,8 +342,9 @@ An insertion helper is defined to be used interactively.
 
 To confirm that the table template function works, we export it with the name =transactions-example= for future reference.
 
+<<transaction-example>>
 #+begin_src elisp :exports both :results raw
-(print (acct-rcpt-table-template "transactions-example"))
+(acct-rcpt-table-template "transactions-example")
 #+end_src
 
 #+RESULTS:
@@ -359,24 +360,41 @@ To confirm that the table template function works, we export it with the name =t
 | # | 239580.50 |      0 | [2022-01-31 Mon] |                   | ending balance   |
 #+TBLFM: $2=@-1+$+1;%.2f
 
-** TODO Read transactions from a spreadsheet
+** TODO Read Transactions from Accounting Table
 
-#+begin_src elisp :results none :noweb yes :noweb-ref app
-(defun acct-rcpt-read-table (data)
-  "Read entries from accounting table"
-  (car data))
+In order to work with the template that has been defined in [[*Accounting Table Format][format]], we will need to define some functions to read the table and extract necessary data for further processing.
+
+We define a function to read all calculated records (indicated by the recalculate marker =#=) which typically represent /transaction records/ (i.e.: nearly all transaction records will have a recalculate marker).
+
+#+begin_src elisp :results none :noweb yes :noweb-ref app :noweb-sep "\n\n"
+(defun acct-rcpt--table-calculated-records (data)
+  "Get calculated records from table"
+  (mapcar (lambda (rec) (pcase rec
+                          (`("#" . ,rec) rec)
+                          (_ nil))) data))
 #+end_src
 
-In order to work with the template that has been defined in [[*Accounting Table Format][format]], we will need to define some functions to walk through the table and perform the needed work in verifying transactions.
+We also define a function to isolate all non-empty file entries from /transaction records/.
 
-*** TODO Study how to iterate over a named table
+#+begin_src elisp :results none :noweb yes :noweb-ref app :noweb-sep "\n\n"
+(defun acct-rcpt--table-files (data)
+  "Get files from table"
+  (mapcar (lambda (rec) (pcase rec
+                          (`("#" ,balance ,diff ,date "" ,description) nil)
+                          (`("#" ,balance ,diff ,date ,file ,description) file)
+                          (_ nil))) data))
+#+end_src
 
-#+begin_src elisp :exports both :results raw :var data=transactions-example
-(acct-rcpt-read-table data)
+*** TODO Demonstrate How to Iterate over an Accounting Table
+
+The usage of the /transaction/ read helper functions, is demonstrated through a code block that read a specific variable through the =:var= header argument. In this case we refer to the [[transactions-example]] reference defined earlier.
+
+#+begin_src elisp :exports both :results verbatim :var data=transactions-example
+(acct-rcpt--table-files data)
 #+end_src
 
 #+RESULTS:
-( Balance Diff Date File Description)
+: (nil nil nil nil "[[file:acct-rcpt.el]]" nil nil)
 
 * TODO [0%] Review
 

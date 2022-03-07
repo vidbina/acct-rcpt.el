@@ -94,9 +94,18 @@
   (interactive "sTable name: ")
   (insert (acct-rcpt-table-template (table-name))))
 
-(defun acct-rcpt-read-table (data)
-  "Read entries from accounting table"
-  (car data))
+(defun acct-rcpt--table-calculated-records (data)
+  "Get calculated records from table"
+  (mapcar (lambda (rec) (pcase rec
+                          (`("#" . ,rec) rec)
+                          (_ nil))) data))
+
+(defun acct-rcpt--table-files (data)
+  "Get files from table"
+  (mapcar (lambda (rec) (pcase rec
+                          (`("#" ,balance ,diff ,date "" ,description) nil)
+                          (`("#" ,balance ,diff ,date ,file ,description) file)
+                          (_ nil))) data))
 
 (provide 'acct-rcpt)
 ;;; acct-rcpt.el ends here
