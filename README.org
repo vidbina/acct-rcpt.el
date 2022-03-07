@@ -122,7 +122,7 @@ The =acct-rcpt-contexts= custom variable will simply contain a list of these /co
 Some validation helpers are defined in order to facilitate health-checking of the structure of contexts prior to attempts to conduct any work based on these inputs.
 
 #+NAME: contexts-validator
-#+begin_src elisp :results none :noweb yes :noweb-ref app
+#+begin_src elisp :results none :noweb yes :noweb-ref app :noweb-sep "\n\n"
 <<context-validator>>
 
 (defun acct-rcpt--valid-contexts (contexts)
@@ -268,7 +268,7 @@ The *valid context data* helper returns a cons cell of a string value and an err
          (cons data nil))))
 #+end_src
 
-The tests confirm that "typechecking" (i.e.: input is an alist) and schema validation (structure) work as expected. As in the [[*Context Label Validation][label validation helper]], we define an =agree= helper to verify agreement between an expected value and the output of the *valid context label* helper.
+The tests confirm that "typechecking" (i.e.: input is an alist) and schema validation (structure) work as expected. As in the [[*Validating a Context Label][context label validation helper]], we define an =agree= helper to verify agreement between an expected value and the output of the *valid context label* helper.
 
 #+NAME: context-config-validator-test
 #+begin_src elisp :results none
