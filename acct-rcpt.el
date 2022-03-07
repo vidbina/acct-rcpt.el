@@ -74,5 +74,29 @@
              (cons nil vals))))
         (t (cons contexts nil))))
 
+(defun acct-rcpt-table-template (table-name)
+  "Return accounting table template"
+  (string-join
+           (list (format "#+NAME: %s" table-name) "
+|   |   Balance |  Diff | Date             | File              | Description      |
+| ! |   Balance |  Diff | Date             | File              | Description      |
+| / |           |       |                  | <6>               |                  |
+|   | 100000.00 |     0 | [2022-01-01 Sat] |                   | starting balance |
+|---+-----------+-------+------------------+-------------------+------------------|
+| # | 103500.00 |  3500 |                  | [[file:acct-rcpt.el]] |                  |
+| # |  98500.00 | -5000 |                  |                   |                  |
+|---+-----------+-------+------------------+-------------------+------------------|
+| # |  98500.00 |     0 | [2022-01-31 Mon] |                   | ending balance   |
+#+TBLFM: $2=@-1+$+1;%.2f")))
+
+(defun acct-rcpt-insert-table-template (table-name)
+  "Insert accounting table template"
+  (interactive "sTable name: ")
+  (insert (acct-rcpt-table-template (table-name))))
+
+(defun acct-rcpt-read-table (data)
+  "Read entries from accounting table"
+  (car data))
+
 (provide 'acct-rcpt)
 ;;; acct-rcpt.el ends here

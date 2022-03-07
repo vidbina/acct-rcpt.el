@@ -297,24 +297,69 @@ In order to simplify work for accounting it may be necessary to formulate a clea
 
 ** TODO Allow for custom logic to modify /new accounting period/ directory
 
-* TODO [0%] Receipts and Invoices
+* TODO [66%] Receipts and Invoices
 
-** TODO Read transactions from a spreadsheet
+** DONE Accounting Table Format
+
+In order to represent the transactions for a given period, we use an org-table that contains the balance, the difference for every transaction, the date, a link to a file (receipt or invoice) and a human-friendly description that should be helpful to our future selves and any friendly auditors.
 
 #+NAME: transactions-template
-#+begin_src org
-|   |   Balance | Diff | Date             | File              | Description      |
-| ! |   Balance | Diff | Date             | File              | Description      |
-| / |           |      |                  | <6>               |                  |
-|   | 100000.00 |    0 | [2022-01-01 Sat] |                   | starting balance |
-|---+-----------+------+------------------+-------------------+------------------|
-| # | 103500.00 | 3500 |                  | [[file:acct-rcpt.el]] |                  |
-| # | 108500.00 | 5000 |                  |                   |                  |
-| # | 107900.00 | -600 |                  |                   |                  |
-|---+-----------+------+------------------+-------------------+------------------|
-| # | 107900.00 |    0 | [2022-01-31 Mon] |                   | ending balance   |
+#+begin_src org :results none
+|   |   Balance |  Diff | Date             | File              | Description      |
+| ! |   Balance |  Diff | Date             | File              | Description      |
+| / |           |       |                  | <6>               |                  |
+|   | 100000.00 |     0 | [2022-01-01 Sat] |                   | starting balance |
+|---+-----------+-------+------------------+-------------------+------------------|
+| # | 103500.00 |  3500 |                  | [[file:acct-rcpt.el]] |                  |
+| # |  98500.00 | -5000 |                  |                   |                  |
+|---+-----------+-------+------------------+-------------------+------------------|
+| # |  98500.00 |     0 | [2022-01-31 Mon] |                   | ending balance   |
 ,#+TBLFM: $2=@-1+$+1;%.2f
 #+end_src
+
+** DONE Accounting Table Template
+
+Based on the defined [[*Accounting Table Format][accounting table format]], we define a function that returns a table template such that we never have to think about stubbing the table from scratch ourselves.
+
+#+begin_src elisp :results none :noweb yes :noweb-ref app :noweb-sep "\n\n"
+(defun acct-rcpt-table-template (table-name)
+  "Return accounting table template"
+  (string-join
+           (list (format "#+NAME: %s" table-name) "
+<<transactions-template>>")))
+#+end_src
+
+An insertion helper is defined to be used interactively.
+
+#+begin_src elisp :results none :noweb yes :noweb-ref app :noweb-sep "\n\n"
+(defun acct-rcpt-insert-table-template (table-name)
+  "Insert accounting table template"
+  (interactive "sTable name: ")
+  (insert (acct-rcpt-table-template (table-name))))
+#+end_src
+
+*** Demonstrate Usage of the Accounting Table Template
+
+To confirm that the table template function works, we export it with the name =transactions-example= for future reference.
+
+#+begin_src elisp :exports both :results raw
+(print (acct-rcpt-table-template "transactions-example"))
+#+end_src
+
+#+RESULTS:
+#+NAME: transactions-example
+|   |   Balance |   Diff | Date             | File              | Description      |
+| ! |   Balance |   Diff | Date             | File              | Description      |
+| / |           |        |                  | <6>               |                  |
+|   | 270080.50 |      0 | [2022-01-01 Sat] |                   | starting balance |
+|---+-----------+--------+------------------+-------------------+------------------|
+| # | 290580.50 |  20500 |                  | [[file:acct-rcpt.el]] |                  |
+| # | 239580.50 | -51000 |                  |                   |                  |
+|---+-----------+--------+------------------+-------------------+------------------|
+| # | 239580.50 |      0 | [2022-01-31 Mon] |                   | ending balance   |
+#+TBLFM: $2=@-1+$+1;%.2f
+
+** TODO Read transactions from a spreadsheet
 
 #+begin_src elisp :results none :noweb yes :noweb-ref app
 (defun acct-rcpt-read-table (data)
@@ -322,24 +367,16 @@ In order to simplify work for accounting it may be necessary to formulate a clea
   (car data))
 #+end_src
 
-
-#+begin_src elisp :results none :noweb yes :noweb-ref app
-(defun acct-rcpt--experiment-1 ()
-  (string-join
-          (list
-           "#+NAME: transactions" "
-<<transactions-template>>")
-          "\n"))
-#+end_src
+In order to work with the template that has been defined in [[*Accounting Table Format][format]], we will need to define some functions to walk through the table and perform the needed work in verifying transactions.
 
 *** TODO Study how to iterate over a named table
 
-#+begin_src elisp :var data=transactions
+#+begin_src elisp :exports both :results raw :var data=transactions-example
 (acct-rcpt-read-table data)
 #+end_src
 
 #+RESULTS:
-|   | Balance | Diff | Date | File | Description |
+( Balance Diff Date File Description)
 
 * TODO [0%] Review
 
