@@ -398,9 +398,13 @@ The usage of the /transaction/ read helper functions, is demonstrated through a 
 
 * TODO [0%] Review
 
+** TODO Check if link exists
+
+Explore whether to use ~org-element-link-parser~
+
 ** TODO Check completeness
 
-Based on the accounting spreadsheet, verify that all documents exist.
+Based on the accounting spreadsheet, verify that all linked documents exist.
 
 * TODO [0%] Report accounting period
 
